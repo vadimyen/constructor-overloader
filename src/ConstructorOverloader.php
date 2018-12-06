@@ -11,24 +11,46 @@ namespace Vadimyen;
 
 class ConstructorOverloader
 {
-    public function construct($object, array $args)
+    private $name;
+
+    public function __construct($name = "__construct")
     {
-        $this->validate($object);
-        $argc = count($args);
-        $method = "__construct{$argc}";
-        $invoker = \Closure::bind(function ($object, $method, $args) {
-            return $object->$method(...$args);
-        }, $object, $object);
-        return $invoker($object, $method, $args);
+        $this->name = $name;
     }
 
-    private function validate($object)
+    public function construct($object, array $args = array())
+    {
+        $this->validateParam($object);
+        $argc = count($args);
+        $methodName = "{$this->name}{$argc}";
+        $this->checkMethodExists($object, $methodName, $argc);
+        $constructor = $this->getConstructor($object);
+        return $constructor($object, $methodName, $args);
+    }
+
+    private function validateParam($object)
     {
         if (!is_object($object)) {
-            throw new \TypeError("{$object} is not an object");
+            throw new \TypeError("{
+        $object} is not an object");
         }
 
     }
 
+    private function getConstructor($object)
+    {
+        return \Closure::bind(function ($object, $method, $args) {
+            return $object->$method(...$args);
+        }, $object, get_class($object));
+
+    }
+
+    private function checkMethodExists($object, $methodName, $argc)
+    {
+        if (!method_exists($object, $methodName)) {
+            $className = get_class($object);
+            throw new \InvalidArgumentException("There's no {$methodName} method with {$argc} arguments in {$className} class.");
+        }
+    }
 
 }
