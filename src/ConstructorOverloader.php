@@ -37,7 +37,7 @@ class ConstructorOverloader
 
     }
 
-    private function getConstructor($object)
+    private function getConstructor($object): \Closure
     {
         return \Closure::bind(function ($object, $method, $args) {
             return $object->$method(...$args);
